@@ -1,25 +1,37 @@
-// api/token.js
-import { createClient } from '@supabase/supabase-js';
+ü<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Kod Sistemi</title>
+</head>
+<body>
+  <h1>QR Kod Sistemi</h1>
+  <div id="qr-container">QR kodu yükleniyor...</div>
 
-const supabase = createClient(
-  'https://nxxnlyzerrzarrljvahg.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54eG5seXplcnJ6YXJybGp2YWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjk0OTEsImV4cCI6MjA2MTcwNTQ5MX0.69VH2om7MnvxgYpdppI1P1q-wBbnvANtMWeYvTMfQw8'
-);
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script>
+    async function fetchToken() {
+      const response = await fetch('/api/token');
+      const data = await response.json();
 
-export default async function handler(req, res) {
-  const newToken = Math.random().toString(36).substring(2);
+      if (data.token) {
+        const url = `https://yoklama-sistemi-pskgun.vercel.app/?token=${data.token}`;
+        generateQRCode(url);
+      }
+    }
 
-  const { data, error } = await supabase
-    .from('qr_tokens')
-    .insert([{ token: newToken, created_at: new Date() }]);
+    function generateQRCode(url) {
+      const qrContainer = document.getElementById('qr-container');
+      qrContainer.innerHTML = '';
+      QRCode.toCanvas(document.createElement('canvas'), url, function (error, canvas) {
+        if (error) console.error(error);
+        else qrContainer.appendChild(canvas);
+      });
+    }
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
-
-  setTimeout(async () => {
-    await supabase.from('qr_tokens').delete().eq('id', data[0].id);
-  }, 30000);
-
-  res.status(200).json({ token: newToken });
-}
+    setInterval(fetchToken, 30000);  // 30 saniyede bir yenile
+    fetchToken(); // İlk açılışta QR kod oluştur
+  </script>
+</body>
+</html>
