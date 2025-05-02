@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Yoklama QR Kodu</title>
+  <title>Etkinlik Girişi İçin QR Kodu</title>
   <style>
     body {
       display: flex;
@@ -40,19 +40,40 @@
       color: #6b7280;
       font-size: 0.9rem;
     }
+
+    #token-status {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+    }
+
+    .valid {
+      color: green;
+    }
+
+    .invalid {
+      color: red;
+    }
   </style>
 </head>
 <body>
   <h1>Etkinlik Girişi İçin QR Kodu</h1>
+
+  <!-- QR Kodu Container -->
   <div id="qr-container">
-    <img id="qr-code" src="" alt="QR Code" />
+    <img id="qr-code" src="" alt="QR Kodu" />
   </div>
   <p>Kod her 30 saniyede bir yenilenir</p>
 
+  <!-- Token Durum Mesajı -->
+  <div id="token-status">
+    <p id="status-message">Yükleniyor...</p>
+  </div>
+
   <script>
+    // QR kodunu yenilemek için fonksiyon
     async function fetchQR() {
       try {
-        const response = await fetch('/api/token');
+        const response = await fetch('/api/token'); // Supabase API'den token al
         const data = await response.json();
 
         if (!data.token) {
@@ -60,15 +81,53 @@
         }
 
         const qrImage = document.getElementById('qr-code');
-        const targetURL = `https://yoklama-sistemi-pskgun.vercel.app/check-token.html?token=${data.token}`; // Burada yönlendirme URL'sini güncelliyoruz
+        const targetURL = `https://yoklama-sistemi-pskgun.vercel.app/check-token.html?token=${data.token}`;
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(targetURL)}&size=250x250`;
       } catch (error) {
         console.error('QR kod yüklenemedi:', error);
       }
     }
 
+    // Token doğrulamak için fonksiyon
+    async function verifyToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      if (!token) {
+        document.getElementById('status-message').innerHTML = "Geçersiz token!";
+        document.getElementById('token-status').classList.add('invalid');
+        return;
+      }
+
+      try {
+        const response = await fetch('https://nxxnlyzerrzarrljvahg.supabase.co/rest/v1/qr_tokens?token=eq.' + token, {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54eG5seXplcnJ6YXJybGp2YWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjk0OTEsImV4cCI6MjA2MTcwNTQ5MX0.69VH2om7MnvxgYpdppI1P1q-wBbnvANtMWeYvTMfQw8',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.length > 0) {
+          document.getElementById('status-message').innerHTML = "Token geçerli! Katılımınızı tamamlayabilirsiniz.";
+          document.getElementById('token-status').classList.add('valid');
+        } else {
+          document.getElementById('status-message').innerHTML = "Token geçersiz.";
+          document.getElementById('token-status').classList.add('invalid');
+        }
+      } catch (error) {
+        document.getElementById('status-message').innerHTML = "Bir hata oluştu: " + error.message;
+        document.getElementById('token-status').classList.add('invalid');
+      }
+    }
+
+    // Sayfa yüklenince QR kodu al ve doğrulama işlemi başlat
     fetchQR();
     setInterval(fetchQR, 30000); // Her 30 saniyede bir yenile
+
+    // Token doğrulama işlemini başlat
+    verifyToken();
   </script>
 </body>
 </html>
