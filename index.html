@@ -60,7 +60,7 @@
         }
 
         const qrImage = document.getElementById('qr-code');
-        const targetURL = `https://yoklama-sistemi-pskgun.vercel.app/?token=${data.token}`;
+        const targetURL = `https://yoklama-sistemi-pskgun.vercel.app/check-token.html?token=${data.token}`; // Burada yönlendirme URL'sini güncelliyoruz
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(targetURL)}&size=250x250`;
       } catch (error) {
         console.error('QR kod yüklenemedi:', error);
