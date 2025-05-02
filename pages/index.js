@@ -8,7 +8,7 @@ export default function Home() {
 
   const generateQR = async () => {
     try {
-      const res = await fetch('/api/token');
+      const res = await fetch('/api/token.js');
       const data = await res.json();
       if (data.token) {
         const url = `https://yoklama-sistemi-pskgun.vercel.app/?token=${data.token}`;
