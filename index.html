@@ -1,37 +1,57 @@
-ü<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Kod Sistemi</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yoklama Formu</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    #form { display: none; }
+    #error { color: red; font-weight: bold; }
+  </style>
 </head>
 <body>
-  <h1>QR Kod Sistemi</h1>
-  <div id="qr-container">QR kodu yükleniyor...</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <h1>Katılım Formu</h1>
+
+  <div id="error"></div>
+
+  <form id="form">
+    <label>Ad: <input type="text" name="ad" required></label><br><br>
+    <label>Soyad: <input type="text" name="soyad" required></label><br><br>
+    <label>Email: <input type="email" name="email" required></label><br><br>
+    <button type="submit">Gönder</button>
+  </form>
+
   <script>
-    async function fetchToken() {
-      const response = await fetch('/api/token');
-      const data = await response.json();
+    // URL'den token'ı al
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
 
-      if (data.token) {
-        const url = `https://yoklama-sistemi-pskgun.vercel.app/?token=${data.token}`;
-        generateQRCode(url);
+    async function validateToken() {
+      if (!token) {
+        document.getElementById('error').textContent = "Geçersiz bağlantı. Token bulunamadı.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/validate?token=${token}`);
+        const data = await res.json();
+
+        if (res.ok && data.valid) {
+          // Token geçerli → formu göster
+          document.getElementById('form').style.display = 'block';
+        } else {
+          document.getElementById('error').textContent = "Bu QR kodun süresi dolmuş.";
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('error').textContent = "Doğrulama sırasında hata oluştu.";
       }
     }
 
-    function generateQRCode(url) {
-      const qrContainer = document.getElementById('qr-container');
-      qrContainer.innerHTML = '';
-      QRCode.toCanvas(document.createElement('canvas'), url, function (error, canvas) {
-        if (error) console.error(error);
-        else qrContainer.appendChild(canvas);
-      });
-    }
-
-    setInterval(fetchToken, 30000);  // 30 saniyede bir yenile
-    fetchToken(); // İlk açılışta QR kod oluştur
+    validateToken();
   </script>
+
 </body>
 </html>
