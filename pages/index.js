@@ -11,7 +11,7 @@ export default function Home() {
       const res = await fetch('/api/token.js');
       const data = await res.json();
       if (data.token) {
-        const url = `https://yoklama-sistemi-pskgun.vercel.app/`;
+        const url = `const url = `https://qr-kod-projesi-pi.vercel.app/?token=${data.token}`;`;
         setQrUrl(url);
 
         const qr = await QRCode.toDataURL(url);
