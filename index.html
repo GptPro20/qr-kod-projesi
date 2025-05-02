@@ -2,56 +2,73 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yoklama Formu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yoklama QR Kodu</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; }
-    #form { display: none; }
-    #error { color: red; font-weight: bold; }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f3f4f6;
+    }
+
+    h1 {
+      color: #111827;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    #qr-container {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    #qr-code {
+      width: 250px;
+      height: 250px;
+    }
+
+    p {
+      margin-top: 1rem;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-
-  <h1>Katılım Formu</h1>
-
-  <div id="error"></div>
-
-  <form id="form">
-    <label>Ad: <input type="text" name="ad" required></label><br><br>
-    <label>Soyad: <input type="text" name="soyad" required></label><br><br>
-    <label>Email: <input type="email" name="email" required></label><br><br>
-    <button type="submit">Gönder</button>
-  </form>
+  <h1>Etkinlik Girişi İçin QR Kodu</h1>
+  <div id="qr-container">
+    <img id="qr-code" src="" alt="QR Code" />
+  </div>
+  <p>Kod her 30 saniyede bir yenilenir</p>
 
   <script>
-    // URL'den token'ı al
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-
-    async function validateToken() {
-      if (!token) {
-        document.getElementById('error').textContent = "Geçersiz bağlantı. Token bulunamadı.";
-        return;
-      }
-
+    async function fetchQR() {
       try {
-        const res = await fetch(`/api/validate?token=${token}`);
-        const data = await res.json();
+        const response = await fetch('/api/token');
+        const data = await response.json();
 
-        if (res.ok && data.valid) {
-          // Token geçerli → formu göster
-          document.getElementById('form').style.display = 'block';
-        } else {
-          document.getElementById('error').textContent = "Bu QR kodun süresi dolmuş.";
+        if (!data.token) {
+          throw new Error('Token alınamadı.');
         }
-      } catch (err) {
-        console.error(err);
-        document.getElementById('error').textContent = "Doğrulama sırasında hata oluştu.";
+
+        const qrImage = document.getElementById('qr-code');
+        const targetURL = `https://yoklama-sistemi-pskgun.vercel.app/?token=${data.token}`;
+        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(targetURL)}&size=250x250`;
+      } catch (error) {
+        console.error('QR kod yüklenemedi:', error);
       }
     }
 
-    validateToken();
+    fetchQR();
+    setInterval(fetchQR, 30000); // Her 30 saniyede bir yenile
   </script>
-
 </body>
 </html>
